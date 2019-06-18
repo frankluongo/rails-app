@@ -57,4 +57,11 @@ bin/rails db:migrate
 
 
 ### 5.11 Updating Articles
-This is where I got to in the first 30 minutes.
+- Add an `edit` and `update` functions in the article controller
+- Add an update form to the `edit` page
+
+### 5.12 Using Partials
+- We create a partial called `_form.html.erb` and import it on the new and edit pages
+
+### 5.13 Deleting Articles
+- We don't make a `get` route for deleting an article because that could be bad
