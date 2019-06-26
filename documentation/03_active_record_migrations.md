@@ -1,7 +1,9 @@
 # Active Record Migrations
 
 ## 01 Migration Overview
+
 Example
+
 ```rb
 class CreateProducts < ActiveRecord::Migration[5.0]
   def change
@@ -16,6 +18,7 @@ end
 ```
 
 Tell Active Record how to reverse a migration manually
+
 ```rb
 class ChangeProductsPrice < ActiveRecord::Migration[5.0]
   def change
@@ -30,6 +33,7 @@ end
 ```
 
 You can also use `down` instead of `change`
+
 ```rb
 class ChangeProductsPrice < ActiveRecord::Migration[5.0]
   def up
@@ -51,14 +55,18 @@ end
 ## 02 Creating a Migration
 
 ### 02.1 Creating a Standalone Migration
+
 - File name is like this `YYYYMMDDHHMMSS_create_products.rb`
 - Migration class should match the name of the migration
 
 Generate a migration
-```
+
+```bash
 bin/rails generate migration AddPartNumberToProducts
 ```
+
 Creates this
+
 ```rb
 class AddPartNumberToProducts < ActiveRecord::Migration[5.0]
   def change
@@ -67,10 +75,13 @@ end
 ```
 
 If the migration contains "Add" or "Remove" in its name, Rails will build it appropriately
-```
+
+```bash
 bin/rails generate migration AddPartNumberToProducts part_number:string
 ```
+
 Creates
+
 ```rb
 class AddPartNumberToProducts < ActiveRecord::Migration[5.0]
   def change
@@ -80,7 +91,8 @@ end
 ```
 
 Add an index to a new column
-```
+
+```bash
 bin/rails generate migration AddPartNumberToProducts part_number:string:index
 ```
 
@@ -94,11 +106,13 @@ end
 ```
 
 Remove a migration
-```
+
+```bash
 bin/rails generate migration RemovePartNumberFromProducts part_number:string
 ```
 
 Creates
+
 ```rb
 class RemovePartNumberFromProducts < ActiveRecord::Migration[5.0]
   def change
@@ -108,7 +122,8 @@ end
 ```
 
 Create multiple columns with one command
-```
+
+```bash
 bin/rails generate migration AddDetailsToProducts part_number:string price:decimal
 ```
 
@@ -122,12 +137,14 @@ end
 ```
 
 The name "Create" will make a table
-```
+
+```bash
 bin/rails generate migration CreateProducts name:string part_number:string
 ```
-Makes
-```rb
 
+Makes
+
+```rb
 class CreateProducts < ActiveRecord::Migration[5.0]
   def change
     create_table :products do |t|
@@ -139,7 +156,8 @@ end
 ```
 
 You can also add column types `references` and `belongs_to`
-```
+
+```bash
 bin/rails generate migration AddUserRefToProducts user:references
 ```
 
@@ -152,12 +170,12 @@ end
 ```
 
 You can also create a join table
-```
+
+```bash
 bin/rails g migration CreateJoinTableCustomerProduct customer product
 ```
 
 ```rb
-
 class CreateJoinTableCustomerProduct < ActiveRecord::Migration[5.0]
   def change
     create_join_table :customers, :products do |t|
@@ -168,14 +186,15 @@ class CreateJoinTableCustomerProduct < ActiveRecord::Migration[5.0]
 end
 ```
 
-
 ### 02.2 Model Generators
-```
+
+```bash
 bin/rails generate model Product name:string description:text
 ```
-Creates this migration
-```rb
 
+Creates this migration
+
+```rb
 class CreateProducts < ActiveRecord::Migration[5.0]
   def change
     create_table :products do |t|
@@ -188,9 +207,9 @@ class CreateProducts < ActiveRecord::Migration[5.0]
 end
 ```
 
-
 ### 02.3 Passing Modifiers
-```
+
+```bash
 bin/rails generate migration AddDetailsToProducts 'price:decimal{5,2}' supplier:references{polymorphic}
 ```
 
@@ -203,8 +222,6 @@ class AddDetailsToProducts < ActiveRecord::Migration[5.0]
 end
 ```
 
-
-
 ## 03 Writing a Migration
 
 ### 03.1 Creating a Table
@@ -216,6 +233,7 @@ end
 ```
 
 You can also append options to this
+
 ```rb
 create_table :products, options: "ENGINE=BLACKHOLE" do |t|
   t.string :name, null: false
@@ -223,22 +241,27 @@ end
 ```
 
 ### 03.2 Creating a Join Table
+
 To create tables that join two other tables...
+
 ```rb
 create_join_table :products, :categories
 ```
 
 To specify Null
+
 ```rb
 create_join_table :products, :categories, column_options: { null: true }
 ```
 
 For a custom name
+
 ```rb
 create_join_table :products, :categories, table_name: :categorization
 ```
 
 To create a table with custom indeces
+
 ```rb
 create_join_table :products, :categories do |t|
   t.index :product_id
@@ -246,9 +269,10 @@ create_join_table :products, :categories do |t|
 end
 ```
 
-
 ### 03.3 Changing Tables
+
 To change existing Tables
+
 ```rb
 change_table :products do |t|
   t.remove :description, :name
@@ -258,22 +282,25 @@ change_table :products do |t|
 end
 ```
 
-
 ### 03.4 Changing Columns
+
 To change the value a column accepts...
+
 ```rb
 change_column :products, :part_number, :text
 ```
+
 Note that this is irreversible
 
 Additional Column Changes
+
 ```rb
 change_column_null :products, :name, false
 change_column_default :products, :approved, from: true, to: false
 ```
 
-
 ### 03.5 Column Modifiers
+
 - `limit` Sets the maximum size of the string/text/binary/integer fields.
 - `precision` Defines the precision for the decimal fields, representing the total number of digits in the number.
 - `scale` Defines the scale for the decimal fields, representing the number of digits after the decimal point.
@@ -284,15 +311,18 @@ change_column_default :products, :approved, from: true, to: false
 - `index` Adds an index for the column.
 - `comment` Adds a comment for the column.
 
-
 ### 03.6 Foreign Keys
+
 These guarantee referntial integrity!
+
 ```rb
 add_foreign_key :articles, :authors
 ```
+
 This adds a new foreign key to the `author_id` column of the `articles` table. The key references the ID of the `authors` table.
 
 To remove foreign keys
+
 ```rb
 # let Active Record figure out the column name
 remove_foreign_key :accounts, :branches
@@ -304,13 +334,13 @@ remove_foreign_key :accounts, column: :owner_id
 remove_foreign_key :accounts, name: :special_fk_name
 ```
 
-
 ### 03.7 When Helpers Aren't Enough
+
 To just go ahead and execute some SQL
+
 ```rb
 Product.connection.execute("UPDATE products SET price = 'free' WHERE 1=1")
 ```
-
 
 ### 03.8 Using the `change` Method
 Change supports the following methods
@@ -472,68 +502,64 @@ Roll back the last 3 migrations
 bin/rails db:rollback STEP=3
 ```
 
-
 ### 04.2 Setup The Database
+
 Create the database, load the schema and initialize it
-```
+
+```bash
 db:setup
 ```
 
-
 ### 04.3 Resetting The Database
+
 Drop the database and set it up again
-```
+
+```bash
 db:reset
 ```
 
-
 ### 04.4 Running Specific Migrations
-```
+
+```bash
 bin/rails db:migrate:up VERSION=20080906120000
 ```
 
-
 ### 04.5 Running Migrations in Different Environments
-```
+
+```bash
 bin/rails db:migrate RAILS_ENV=test
 ```
 
-
 ### 04.6 Chaning the Output of Running Migrations
+
 you can use `suppress_messages`, `say` and `say_with_time` to add custom messages to migrations
 
-
-
-
 ## 05 Changing Existing Migrations
+
 You *can* re-run existing migrations by doing a rollback and then calling them again but it is not recommended
-
-
-
 
 ## 06 Schema Dumping And You
 
 ### 06.1 What Are Schema Files For?
+
 These files sum up the database schema in one place
 
 
 ### 06.2 Types of Schema Dumps
+
 They can either be in `sql` or `ruby`
 
 
 ### 06.3 Schema Dumps and Source Control
+
 Keep them in git
 
-
-
-
 ## 07 Active Record and Referential Integrity
+
 Active Record does validation but it's up to you to keep up the integrity of your DB
 
-
-
-
 ## 08 Migrations and Seed Data
+
 Adding Initial Seed Data with a migration
 ```rb
 class AddInitialProducts < ActiveRecord::Migration[5.0]

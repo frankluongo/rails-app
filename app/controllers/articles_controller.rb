@@ -1,6 +1,4 @@
 class ArticlesController < ApplicationController
-  http_basic_authenticate_with name: "dhh", password: "secret", except: [:index, :show]
-
   def index
     @articles = Article.all
   end
@@ -18,7 +16,13 @@ class ArticlesController < ApplicationController
   end
 
   def create
-    @article = Article.new(article_params)
+    @user = User.find(article_params["user"])
+    # @article = Article.new(article_params)
+    @article = Article.new({
+      :title => article_params["title"],
+      :text => article_params["text"],
+      :user => @user
+    })
 
     if @article.save
       redirect_to @article
@@ -46,6 +50,6 @@ class ArticlesController < ApplicationController
 
   private
     def article_params
-      params.require(:article).permit(:title, :text)
+      params.require(:article).permit(:title, :text, :user)
     end
 end
