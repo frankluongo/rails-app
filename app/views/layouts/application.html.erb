@@ -10,6 +10,33 @@
   </head>
 
   <body>
-    <%= yield %>
+    <header class="website-header" aria-label="Website Header">
+      <div class="grid-container">
+        <h1 class="site-logo gc-xsmall-6 gc-small-4">
+          FrankBlog
+        </h1>
+        <nav aria-label="Website Header Navigation" class="gc-xsmall-6 gc-small-8">
+          <ul class="website-header__navigation">
+            <li class="website-header__navigation-item">
+              <%= link_to "Home", root_path %>
+            </li>
+            <li class="website-header__navigation-item">
+              <%= link_to "Articles", articles_path %>
+            </li>
+            <li class="website-header__navigation-item website-header__navigation-item--last">
+              <% if current_user %>
+                <%= link_to 'Log Out', logout_path %>
+              <% else %>
+                <%= link_to 'Sign Up', signup_path %> or
+                <%= link_to 'Log In', login_path %>
+              <% end %>
+            </li>
+          </ul>
+        </nav>
+      </div>
+    </header>
+    <main>
+      <%= yield %>
+    </main>
   </body>
 </html>

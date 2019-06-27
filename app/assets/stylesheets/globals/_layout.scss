@@ -1,0 +1,21 @@
+@import '../base/variables';
+
+.grid-container {
+  display: grid;
+  grid-gap: 1rem;
+  grid-template-columns: repeat(12, 1fr);
+
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+@each $break, $value in $breakpoint-sizes {
+  @include breakpoint($break) {
+    @for $i from 1 through 12 {
+      .gc-#{$break}-#{$i} {
+        grid-column: span #{$i};
+      }
+    }
+  }
+}

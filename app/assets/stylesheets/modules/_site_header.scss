@@ -1,0 +1,25 @@
+.website-header {
+  padding: 1rem 0;
+
+  border-bottom: 1px solid #eee;
+}
+
+.website-header__navigation {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+
+  height: 100%;
+  margin: 0;
+  padding: 0;
+
+  list-style: none;
+}
+
+.website-header__navigation-item {
+  margin-right: 1rem;
+
+  &:last-of-type {
+    margin-right: 0;
+  }
+}
