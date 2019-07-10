@@ -196,6 +196,8 @@ document.body.addEventListener('ajax:success', function(event) {
 
 ## 04 Server-Side Concerns
 
+- When doing AJAX requests, Rails can tell what type of request was sent and respond appropriately
+
 ### 04.1 A Simple Example
 
 Let's say you want to show some users and display a form to add new ones...
@@ -251,3 +253,23 @@ end
 <li><%= user.name %></li>
 ```
 
+## 05 Turbolinks
+
+- Turbolinks use AJAX to speed page rendering in most applications
+
+### 05.1 How Turbolinks Work
+
+- If the browser supports `pushState` then Turbolinks can make an AJAX request for the next page and pull it in without reloading the application.
+
+To disable Turbolinks:
+
+```html
+<a href="..." data-turbolinks="false">No turbolinks here</a>.
+```
+
+To observe when a page loads via turbolinks, use this:
+
+```js
+$(document).on "turbolinks:load", ->
+  alert "page has loaded!"
+```
