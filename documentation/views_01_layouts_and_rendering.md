@@ -513,3 +513,190 @@ There are some special properties that apply to this and the video tag
 - `autobuffer:` true, the audio will pre load the file for the user on page load.
 
 ### 03.2 Understanding `yield`
+
+Identifies in the layout where the content from the view should be inserted
+
+Examples:
+
+```erb
+<html>
+  <head>
+  </head>
+  <body>
+  <%= yield %>
+  </body>
+</html>
+
+<html>
+  <head>
+  <%= yield :head %>
+  </head>
+  <body>
+  <%= yield %>
+  </body>
+</html>
+```
+
+### 03.3 Using `content_for`
+
+```erb
+<% content_for :head do %>
+  <title>A simple page</title>
+<% end %>
+
+<p>Hello, Rails!</p>
+```
+
+### 03.4 Using Partials
+
+Way to break up page into smaller components
+
+#### 03.4.1 Naming Partials
+
+```erb
+<%= render "menu" %>
+```
+
+Will reference `_menu.html.erb`
+
+To reference a view from another folder
+
+```erb
+<%= render "shared/menu" %>
+```
+
+Will reference `app/views/shared/_menu.html.erb`
+
+#### 03.4.2 Using Partials To Simplify Views
+
+Use partials for elements in many places
+
+```erb
+<%= render "shared/ad_banner" %>
+
+<h1>Products</h1>
+
+<p>Here are a few of our fine products:</p>
+...
+<%= render "shared/footer" %>
+```
+
+#### 03.4.3 Partial Layouts
+
+A partial can have its own layout file
+
+```erb
+<%= render partial: "link_area", layout: "graybar" %>
+```
+
+You have to explicitly declare it as a partial when adding layouts
+
+#### 03.4.4 Passing Local Variables
+
+Example
+
+```erb
+<h1>New zone</h1>
+<%= render partial: "form", locals: {zone: @zone} %>
+```
+
+Use `:local_assigns` to check for a variable
+
+```erb
+<h2><%= article.title %></h2>
+
+<% if local_assigns[:full] %>
+  <%= simple_format article.body %>
+<% else %>
+  <%= truncate article.body %>
+<% end %>
+```
+
+Every partial also has a local variable with the same name as it
+
+```erb
+<%= render partial: "customer", object: @new_customer %>
+<%= render @customer %>
+```
+
+Defining this will render `@customer` as the `@new_customer` we passed in
+
+#### 03.4.5 Rendering Collections
+
+The following will render the product partial one time for each production in the collection
+
+```erb
+<h1>Products</h1>
+<%= render partial: "product", collection: @products %>
+```
+
+This can be done shorthand
+
+```erb
+<h1>Products</h1>
+<%= render @products %>
+```
+
+Render will return nil if there is nothing so always add a fallback
+
+```erb
+<h1>Products</h1>
+<%= render(@products) || "There are no products available." %>
+```
+
+#### 03.4.6 Local Variables
+
+Use `:as` to rename a variable in the partial
+
+```erb
+<%= render partial: "product", collection: @products, as: :item %>
+```
+
+#### 03.4.7 Spacer Templates
+
+Dope.
+
+```erb
+<%= render partial: @products, spacer_template: "product_ruler" %>
+```
+
+#### 03.4.8 Collection Partial Layouts
+
+You can also use `:layout` on partial collections!
+
+```erb
+<%= render partial: "product", collection: @products, layout: "special_layout" %>
+```
+
+### 03.5 Using Nested Layouts
+
+`app/views/layouts/application.html.erb`
+
+```erb
+<html>
+<head>
+  <title><%= @page_title or "Page Title" %></title>
+  <%= stylesheet_link_tag "layout" %>
+  <style><%= yield :stylesheets %></style>
+</head>
+<body>
+  <div id="top_menu">Top menu items here</div>
+  <div id="menu">Menu items here</div>
+  <div id="content"><%= content_for?(:content) ? yield(:content) : yield %></div>
+</body>
+</html>
+```
+
+`app/views/layouts/news.html.erb`
+
+```erb
+<% content_for :stylesheets do %>
+  #top_menu {display: none}
+  #right_menu {float: right; background-color: yellow; color: black}
+<% end %>
+<% content_for :content do %>
+  <div id="right_menu">Right menu items here</div>
+  <%= content_for?(:news_content) ? yield(:news_content) : yield %>
+<% end %>
+<%= render template: "layouts/application" %>
+```
