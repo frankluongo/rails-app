@@ -413,3 +413,280 @@ If `f` is an instance of `ActionView::Helpers::FormBuilder` then this will rende
 
 The arrays and hashes you see in your application are the result of some parameter naming conventions that Rails uses.
 
+### 07.1 Basic Structures
+
+- Arrays and Hashes
+- Hashes mirror the syntax used for accessing the value in params
+
+For Hashes...
+
+```html
+<input id="person_name" name="person[name]" type="text" value="Henry"/>
+```
+
+Will be
+
+```rb
+{'person' => {'name' => 'Henry'}}
+```
+
+and `params[:person][:name]` will retrieve the submitted value in the controller.
+
+Hashes can be nested as much as needed
+
+```html
+<input id="person_address_city" name="person[address][city]" type="text" value="New York"/>
+```
+
+```rb
+{'person' => {'address' => {'city' => 'New York'}}}
+```
+
+This is how to add an array
+
+```html
+<input name="person[phone_number][]" type="text"/>
+<input name="person[phone_number][]" type="text"/>
+<input name="person[phone_number][]" type="text"/>
+```
+
+This would result in `params[:person][:phone_number]` being an array containing the inputted phone numbers.
+
+### 07.2 Combining Arrays and Hashes
+
+```html
+<input name="person[addresses][][line1]" type="text"/>
+<input name="person[addresses][][line2]" type="text"/>
+<input name="person[addresses][][city]" type="text"/>
+<input name="person[addresses][][line1]" type="text"/>
+<input name="person[addresses][][line2]" type="text"/>
+<input name="person[addresses][][city]" type="text"/>
+```
+
+This would result in `params[:person][:addresses]` being an array of hashes with keys `line1`, `line2`, and `city`.
+
+- There can only be one level or an array
+- Array parameters do not play well with the check_box helper. According to the HTML specification unchecked checkboxes submit no value. However it is often convenient for a checkbox to always submit a value. The check_box helper fakes this by creating an auxiliary hidden input with the same name. If the checkbox is unchecked only the hidden input is submitted and if it is checked then both are submitted but the value submitted by the checkbox takes precedence.
+
+### 07.3 Using Form Helpers
+
+All of that is nice, but here's how to do it with helpers
+
+Input:
+
+```erb
+<%= form_with model: @person do |person_form| %>
+  <%= person_form.text_field :name %>
+  <% @person.addresses.each do |address| %>
+    <%= person_form.fields_for address, index: address.id do |address_form| %>
+      <%= address_form.text_field :city %>
+    <% end %>
+  <% end %>
+<% end %>
+```
+
+Output:
+
+```html
+<form accept-charset="UTF-8" action="/people/1" data-remote="true" method="post">
+  <input name="_method" type="hidden" value="patch" />
+  <input id="person_name" name="person[name]" type="text" />
+  <input id="person_address_23_city" name="person[address][23][city]" type="text" />
+  <input id="person_address_45_city" name="person[address][45][city]" type="text" />
+</form>
+```
+
+Resulting Params:
+
+```rb
+{'person' => {'name' => 'Bob', 'address' => {'23' => {'city' => 'Paris'}, '45' => {'city' => 'London'}}}}
+```
+
+You can be even more specific:
+
+```erb
+<%= fields_for 'person[address][primary]', address, index: address.id do |address_form| %>
+  <%= address_form.text_field :city %>
+<% end %>
+```
+
+```html
+<input id="person_address_primary_1_city" name="person[address][primary][1][city]" type="text" value="Bologna" />
+```
+
+As a general rule the final input name is the concatenation of the name given to fields_for/form_with, the index value, and the name of the attribute
+
+As a shortcut you can append [] to the name and omit the `:index` option. This is the same as specifying `index: address.id` so...
+
+```erb
+<%= fields_for 'person[address][primary][]', address do |address_form| %>
+  <%= address_form.text_field :city %>
+<% end %>
+```
+
+## 08 Forms to External Resources
+
+You may need to add an auth token
+
+```erb
+<%= form_with url: 'http://farfar.away/form', authenticity_token: 'external_token' do %>
+  Form contents
+<% end %>
+```
+
+How not to add an auth token...
+
+```erb
+<%= form_with url: 'http://farfar.away/form', authenticity_token: false do %>
+  Form contents
+<% end %>
+```
+
+## 09 Building Complex Forms
+
+### 09.1 Configuring The Model
+
+Allow editing via the model
+
+```rb
+class Person < ApplicationRecord
+  has_many :addresses, inverse_of: :person
+  accepts_nested_attributes_for :addresses
+end
+
+class Address < ApplicationRecord
+  belongs_to :person
+end
+```
+
+This creates an `addresses_attributes=` method on `Person` that allows you to create, update, and (optionally) destroy addresses.
+
+### 09.2 Nested Forms
+
+```erb
+<%= form_with model: @person do |f| %>
+  Addresses:
+  <ul>
+    <%= f.fields_for :addresses do |addresses_form| %>
+      <li>
+        <%= addresses_form.label :kind %>
+        <%= addresses_form.text_field :kind %>
+
+        <%= addresses_form.label :street %>
+        <%= addresses_form.text_field :street %>
+        ...
+      </li>
+    <% end %>
+  </ul>
+<% end %>
+```
+
+When an association accepts nested attributes fields_for renders its block once for every element of the association. In particular, if a person has no addresses it renders nothing.
+
+```rb
+def new
+  @person = Person.new
+  2.times { @person.addresses.build }
+end
+```
+
+The fields_for yields a form builder. The parameters' name will be what accepts_nested_attributes_for expects. For example, when creating a user with 2 addresses, the submitted parameters would look like:
+
+```rb
+{
+  'person' => {
+    'name' => 'John Doe',
+    'addresses_attributes' => {
+      '0' => {
+        'kind' => 'Home',
+        'street' => '221b Baker Street'
+      },
+      '1' => {
+        'kind' => 'Office',
+        'street' => '31 Spooner Street'
+      }
+    }
+  }
+}
+```
+
+The keys of the :addresses_attributes hash are unimportant, they need merely be different for each address.
+
+If the associated object is already saved, fields_for autogenerates a hidden input with the  id of the saved record. You can disable this by passing include_id: false to fields_for.
+
+### 09.3 The Controller
+
+Declare the permitted parameters
+
+```rb
+def create
+  @person = Person.new(person_params)
+  # ...
+end
+
+private
+  def person_params
+    params.require(:person).permit(:name, addresses_attributes: [:id, :kind, :street])
+  end
+```
+
+### 09.4 Removing Objects
+
+You can allow users to delete associated objects by passing allow_destroy: true to accepts_nested_attributes_for
+
+```rb
+class Person < ApplicationRecord
+  has_many :addresses
+  accepts_nested_attributes_for :addresses, allow_destroy: true
+end
+```
+
+If the hash of attributes for an object contains the key _destroy with a value that evaluates to true (eg. 1, '1', true, or 'true') then the object will be destroyed. This form allows users to remove addresses:
+
+```erb
+<%= form_with model: @person do |f| %>
+  Addresses:
+  <ul>
+    <%= f.fields_for :addresses do |addresses_form| %>
+      <li>
+        <%= addresses_form.check_box :_destroy %>
+        <%= addresses_form.label :kind %>
+        <%= addresses_form.text_field :kind %>
+        ...
+      </li>
+    <% end %>
+  </ul>
+<% end %>
+```
+
+Don't forget to update the permitted params in your controller to also include the _destroy field:
+
+```rb
+def person_params
+  params.require(:person).
+    permit(:name, addresses_attributes: [:id, :kind, :street, :_destroy])
+end
+```
+
+### 09.5 Preventing Empty Records
+
+It is often useful to ignore sets of fields that the user has not filled in. You can control this by passing a :reject_if proc to accepts_nested_attributes_for. This proc will be called with each hash of attributes submitted by the form. If the proc returns false then Active Record will not build an associated object for that hash. The example below only tries to build an address if the kind attribute is set.
+
+```rb
+class Person < ApplicationRecord
+  has_many :addresses
+  accepts_nested_attributes_for :addresses, reject_if: lambda {|attributes| attributes['kind'].blank?}
+end
+```
+
+As a convenience you can instead pass the symbol :all_blank which will create a proc that will reject records where all the attributes are blank excluding any value for _destroy.
+
+
+### 09.6 Adding Fields on The Fly
+
+When generating new sets of fields you must ensure the key of the associated array is unique - the current JavaScript date (milliseconds since the epoch) is a common choice.
+
+## 10 Using form_for and form_tag
+
+Before form_with was introduced in Rails 5.1 its functionality used to be split between form_tag and form_for. Both are now soft-deprecated.
+
